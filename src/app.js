@@ -1,32 +1,55 @@
 import express from "express";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
+// Import middleware and routes
+import morganMiddleware from "./logger/morgan.js";
+import { CORS_ORIGIN_URLS } from "./config/env.js";
+import authRouter from "./Routes/auth.routes.js";
+import notFoundRouter from "./Routes/404.routes.js";
+import errorHandlerMiddleware from "./Middlewares/errorHandler.middleware.js";
 
 const app = express();
 
-// tell express to use ejs as the templetae engine
-app.set("view engine", "ejs")
-// parse json data
-app.use(express.json())
-// handle form data
-app.use(express.urlencoded({extended: true}));
-// handle static files
-app.use(express.static("public"))
+// Set up file path utilities
+const __fileName = fileURLToPath(import.meta.url);
+const __dirName = path.dirname(__fileName);
 
-// optional: specify views folder (default = ./views) but express does it automatically
-import path from "path"
-import { fileURLToPath } from "url";
+// Tell express to use ejs as the template engine
+app.set("view engine", "ejs");
+app.set("views", path.resolve(__dirName, "./views"));
 
-const __fileName = fileURLToPath(import.meta.url)
-const __dirName = path.dirname(__fileName)
+// Request logging middleware
+app.use(morganMiddleware);
 
-app.set("views", path.resolve(__dirName, "./views") )
+// Security middleware
+app.use(helmet());
 
+// Cookie and CORS parsing
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: CORS_ORIGIN_URLS.split(" "),
+    credentials: true,
+  }),
+);
 
-/*---- Auth system's api endpoints ---- */
-import authRouter from "./Routes/auth.routes.js"
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/v1/auth", authRouter)
+// Static files
+app.use(express.static("public"));
 
-export {
-    app
-}
+// Routes
+app.get("/", (req, res) => res.send("Home page"));
+app.use("/api/v1/auth", authRouter);
+
+// 404 and error handling - should be last
+app.use(notFoundRouter);
+app.use(errorHandlerMiddleware);
+
+export { app };
