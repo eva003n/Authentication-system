@@ -42,16 +42,16 @@ const userSchema = new Schema(
 
 //custom hooks
 //before saving a creating  new user hash password
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   //checks if the provided path is modified then returns true  else if no argument is passed returns true for all paths
   //check if password is modified to avoid hasing the same password each time
   if (!this.isModified("password") || !this.password) {
     //passowrd not modified or it doesnt exist call next middleware
-    return next();
+    return;
   }
 
   this.password = await bcrypt.hash(this.password, 12);
-  next();
+  
 });
 
 //custom methods
