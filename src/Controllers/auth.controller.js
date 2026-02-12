@@ -18,11 +18,12 @@ const signUp = asyncHandler(async (req, res, next) => {
 
   if (user)
     return next(
-      ApiError.conflictRequest(409, req.originalUrl, "Authentication failed"),
+      ApiError.conflictRequest(401, req.originalUrl, "Authentication failed"),
     );
 
   // create user credentials
   const newUser = await User.create({
+    userName: email?.split("@")[0],
     email,
     password,
   });
@@ -75,4 +76,8 @@ const logOut = asyncHandler(async (req, res, next) => {});
 
 const tokenRefresh = asyncHandler(async (req, res, next) => {});
 
-export { signUp, logIn, logOut, tokenRefresh };
+const basicAuthHandler = asyncHandler(async(req, res, next) => {
+  res.send("<h1>Basic auth schema protected resource </h1>")
+})
+
+export { signUp, logIn, logOut, tokenRefresh, basicAuthHandler };
