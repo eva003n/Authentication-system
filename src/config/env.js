@@ -5,4 +5,12 @@ config({
   path: `src/.env`,
 });
 
-export const { PORT, DB_NAME, MONGO_URL, CORS_ORIGIN_URLS } = process.env;
+export const {
+  PORT,
+  NODE_ENV,
+  DB_NAME,
+  MONGO_URL,
+  CORS_ORIGIN_URLS,
+  SESSION_SECRET,
+  REDIS_URL,
+} = process.env;

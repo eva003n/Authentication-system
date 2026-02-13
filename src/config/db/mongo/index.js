@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { DB_NAME, MONGO_URL } from "../env.js";
+import { DB_NAME, MONGO_URL } from "../../env.js";
 import querystring from "querystring"
-import logger from "../../logger/logger.winston.js";
+import logger from "../../../logger/logger.winston.js";
 
 
 

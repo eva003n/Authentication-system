@@ -1,5 +1,5 @@
 import { app } from "./app.js";
-import connectMongoDB from "./config/db/index.js";
+import connectMongoDB from "./config/db/mongo/index.js";
 import logger from "./logger/logger.winston.js";
 
 
