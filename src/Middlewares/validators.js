@@ -11,7 +11,12 @@ const userSchema = z.object({
   password: z.string().min(8).max(20),
 });
 
+const jwtSchema = z.object({
+  id: z.string(),
+  role: z.enum(["admin", "user"])
+})
 
 
 
-export { userSchema, authSchema };
+
+export { userSchema, authSchema, jwtSchema };

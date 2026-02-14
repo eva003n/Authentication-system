@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import options from "./index.js";
 import bcrypt from "bcryptjs";
+import { boolean } from "zod";
 
 const userSchema = new Schema(
   {
@@ -30,6 +31,11 @@ const userSchema = new Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    isSessionProtected: {
+      type: boolean,
+      default: false
     },
 
     refreshToken: {

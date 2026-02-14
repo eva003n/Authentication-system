@@ -4,10 +4,12 @@ import logger from "./logger/logger.winston.js";
 
 
 import { PORT } from "./config/env.js";
+import { connectRedis } from "./config/db/redis/index.js";
 const port = PORT;
 
 // create a TCP server listening that port 
 app.listen(port, async() => {
     await connectMongoDB();
+    await connectRedis();
     logger.info(`🚀 Authentication service running at http://localhost:${port} 🚀`)
 })
