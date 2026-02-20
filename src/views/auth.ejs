@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- <link rel="stylesheet" href="styles.css"> -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
 
     <title>Authentication | <%= signUp ? "Sign up": "Sign in" %></title>
 </head>
 <body>
     <section>
         <h2><%= signUp ? "Sign up": "Sign in" %></h2>
-        <form action="<%= signUp? '/api/v1/auth/sign-up' : '/api/v1/sign-in' %>" method="post">
+        <form action="<%= signUp? '/api/v1/auth/sign-up' : '/api/v1/auth/sign-in' %>" method="post">
             <!-- conditionaly render username based on where this is sign up of sign in page -->
             <% 
             if(signUp) { %>
             <div>
-                <label for="">Username</label>
+                <label for="username">Username</label>
                 <input id="username" type="text" name="username">
             </div>
             <%}%>
@@ -26,7 +26,7 @@
                 <input id="email" type="email" name="email"></div>
             <div>
                 <label for="password">Password</label>
-                <input id="password" type="text" name="password">
+                <input id="password" type="password" name="password">
             </div>
             <div>
                 <button type="submit"><%= signUp ? "Sign up": "Sign in" %></button>
@@ -36,7 +36,7 @@
         <div>
             <p>
                 <%= signUp? "Already have an account " : "Dont have an account " %>
-            <a href="<%= signUp? '/auth/sign-in' : '/auth/sign-up'"> 
+            <a href="<%= signUp? '/auth/sign-in' : '/auth/sign-up' %>"> 
                 <%= signUp ? "Sign in": "Sign up" %>
             </a>
 

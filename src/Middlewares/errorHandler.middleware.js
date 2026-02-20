@@ -1,5 +1,7 @@
+import jwt from "jsonwebtoken";
 import logger from "../logger/logger.winston.js";
 import ApiError from "../utils/ApiError.js";
+// import {TokenExpiredError, JsonWebTokenError} from "jsonwebtoken"
 
 
 const errorHandlerMiddleware = async (
@@ -14,21 +16,21 @@ const errorHandlerMiddleware = async (
     return res.type("application/problem+json").status(err.status).json(err);
   }
   
-  else if(err instanceof TokenExpiredError) {
+  else if(err instanceof jwt.TokenExpiredError) {
     logger.error(`JWT expired Error: ${err.message}: expired at ${err.expiredAt}`)
     return res
       .type("application/problem+json")
       .status(400)
-      .json(ApiError.badRequest(400, req.originalUrl, "Bad request"));
+      .json(ApiError.unAuthorizedRequest(401, req.originalUrl));
 
   }
 
-  else if(err instanceof JsonWebTokenError) {
+  else if(err instanceof jwt.JsonWebTokenError) {
     logger.error(`JWT error: ${err.message}`)
      return res
       .type("application/problem+json")
       .status(400)
-      .json(ApiError.badRequest(400, req.originalUrl, "Bad request"));
+      .json(ApiError.badRequest(400, req.originalUrl));
   
   }
 

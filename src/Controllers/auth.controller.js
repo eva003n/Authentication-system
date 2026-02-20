@@ -3,7 +3,11 @@ import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "../config/env.js";
+import {
+  ACCESS_TOKEN_SECRET,
+  REFRESH_TOKEN_SECRET,
+  NODE_ENV,
+} from "../config/env.js";
 import { redisClient } from "../config/db/redis/index.js";
 
 /**
@@ -21,7 +25,11 @@ const signUp = asyncHandler(async (req, res, next) => {
 
   if (user)
     return next(
-      ApiError.conflictRequest(401, req.originalUrl, "Authentication failed"),
+      ApiError.unAuthorizedRequest(
+        401,
+        req.originalUrl,
+        "Authentication failed",
+      ),
     );
 
   // create user credentials
@@ -34,6 +42,7 @@ const signUp = asyncHandler(async (req, res, next) => {
   // hide password from response
   newUser.password = undefined;
 
+  res.redirect("/auth/sign-in");
   return res
     .status(201)
     .json(new ApiResponse(201, newUser, "Account created successfully"));
@@ -89,7 +98,6 @@ const logIn = asyncHandler(async (req, res, next) => {
 */
   await redisClient.set("refresh", refreshToken);
 
-
   // send jwt token
 
   res
@@ -98,31 +106,34 @@ const logIn = asyncHandler(async (req, res, next) => {
       "AccessToken",
       accessToken,
       {
-        path: "/",
         httpOnly: true, // prevent XSS
         secure: NODE_ENV === "production", // encrypt cookie
         sameSite: "strict", // prevent CRSF
         maxAge: 15 * 60 * 1000,
+        signed: true,
       },
-      { signed: true },
+      // { signed: true },
     )
-   /*  .cookie(
+    .cookie(
       "RefreshToken",
       refreshToken,
       {
-        path: "/",
         httpOnly: true, // prevent XSS
         secure: NODE_ENV === "production", // encrypt cookie
         sameSite: "strict", // prevent CRSF
         maxAge: 24 * 60 * 60 * 1000, // seconds in i day(When dealing with express this should be in ms while setting raw header it is in secs)
+        signed: true,
       },
-      { signed: true },
-    ) */
+      // { signed: true },
+    )
 
     .json(new ApiResponse(200, user, "Logged in successfully"));
 });
 
 const logOut = asyncHandler(async (req, res, next) => {
+
+  await redisClient.del("refresh")
+  
   // if admin also detroy session
   if (req.user.role === "admin") {
     req.session.destroy();
@@ -136,15 +147,18 @@ const logOut = asyncHandler(async (req, res, next) => {
 });
 
 const tokenRefresh = asyncHandler(async (req, res, next) => {
-  //make sure cookie is not tampered with
-  if (!req.signedCookies) {
-    return next(ApiError.badRequest(400, req.originalUrl, "Bad request"));
+  const oldAccessToken = req.signedCookies.AccessToken;
+  // make request idempotent, dont refresh if access token has not expired
+  if (oldAccessToken) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Refreshed successfully"));
   }
 
   const oldRefreshToken = req.signedCookies.RefreshToken;
   // check cookie for old refresh token
-  if (!refreshToken) {
-    return next(ApiError.badRequest(400, req.originalUrl, "Bad request"));
+  if (!oldRefreshToken) {
+    return next(ApiError.badRequest(400, req.originalUrl));
   }
 
   // verify token
@@ -153,9 +167,7 @@ const tokenRefresh = asyncHandler(async (req, res, next) => {
   // check token exist in store(redis)
   const exists = await redisClient.get("refresh");
   if (!exists) {
-    return next(
-      ApiError.forbiddenRequest(403, req.originalUrl, "Fordidden"),
-    );
+    return next(ApiError.forbiddenRequest(403, req.originalUrl));
   }
 
   // rotate
@@ -174,30 +186,22 @@ const tokenRefresh = asyncHandler(async (req, res, next) => {
 
   res
     .status(200)
-    .cookie(
-      "AccessToken",
-      accessToken,
-      {
-        httpOnly: true, // prevent XSS
-        secure: NODE_ENV === "production", // encrypt cookie
-        sameSite: "strict", // prevent CRSF
-        maxAge: 15 * 60 * 1000,
-      },
-      { signed: true },
-    )
-    /*  .cookie(
-      "RefreshToken",
-      refreshToken,
-      {
-        httpOnly: true, // prevent XSS
-        secure: NODE_ENV === "production", // encrypt cookie
-        sameSite: "strict", // prevent CRSF
-        maxAge: 24 * 60 * 60 * 1000, // seconds in i day(When dealing with express this should be in ms while setting raw header it is in secs)
-      },
-      { signed: true },
-    ) */
+    .cookie("AccessToken", accessToken, {
+      httpOnly: true, // prevent XSS
+      secure: NODE_ENV === "production", // encrypt cookie
+      sameSite: "strict", // prevent CRSF
+      maxAge: 15 * 60 * 1000,
+      signed: true,
+    })
+    .cookie("RefreshToken", newRefreshToken, {
+      httpOnly: true, // prevent XSS
+      secure: NODE_ENV === "production", // encrypt cookie
+      sameSite: "strict", // prevent CRSF
+      maxAge: 24 * 60 * 60 * 1000, // seconds in i day(When dealing with express this should be in ms while setting raw header it is in secs)
+      signed: true,
+    })
 
-    .json(new ApiResponse(200, user, "Token generated successfully"));
+    .json(new ApiResponse(200, null, "Refreshed successfully"));
 });
 
 const basicAuthHandler = asyncHandler(async (req, res, next) => {
@@ -228,7 +232,7 @@ const generateToken = async (user) => {
 /*  Auth UI handlers */
 const signUpPage = async (req, res) => {
   const authData = {
-    signUP: true,
+    signUp: true,
   };
   // renders sign up page
   res.render("auth", authData);
@@ -237,7 +241,7 @@ const signUpPage = async (req, res) => {
 const signInPage = async (req, res) => {
   // renders sign in page
   const authData = {
-    signUP: false,
+    signUp: false,
   };
   // renders sign up page
   res.render("auth", authData);

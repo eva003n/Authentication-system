@@ -19,7 +19,7 @@ class ApiError extends Error {
     const { stackTraceLimit } = Error; // 10
 
     Error.stackTraceLimit = 0;
-    super(message); // no stack trace generated
+    super(); // no stack trace generated
     Error.stackTraceLimit = stackTraceLimit;
 
     this.type = type ? `/${type}` : "about:blank";
